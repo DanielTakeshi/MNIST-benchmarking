@@ -23,9 +23,12 @@ legend_size = 18
 ysize = 20
 xsize = 20
 lw, ms = 3, 8
-# Adjust based on what we did with the scripts
-BURN_IN = 30
-EPOCHS = 300
+
+# Adjust based on what we did with the scripts. Assumes one sample comes from
+# every half epoch, approximately.
+BURN_IN = 80
+SAMPLES = 200 + BURN_IN # Technically we ran 100 ....
+EPOCHS  = 100 # not counting burn-in
 
 
 def parse(file_head, headname, dirs):
@@ -44,14 +47,14 @@ def parse(file_head, headname, dirs):
             all_lines = [x.strip('\n') for x in f.readlines()]
         idx = 0
         while True:
-            if 'epoch | l2_loss (v)' in all_lines[idx]:
+            if 'sample | l2_loss (v)' in all_lines[idx]:
                 all_lines = all_lines[idx+1:]
                 #print("found info for {}, at line {}, w/{} data points".format(
                 #        ff, idx, len(all_lines)))
                 break
             idx += 1
             if idx > 50:
-                raise Exception()
+                raise Exception("problem at {}".format(path))
         all_stuff = [x.split() for x in all_lines]
         for idx in range(len(all_stuff)):
             all_stuff[idx] = [float(x) for x in all_stuff[idx]]
@@ -116,54 +119,33 @@ def plot_one_type(headname, figname, hparams):
     fig,ax = plt.subplots(nrows, ncols, figsize=(10*ncols,10*nrows))
     print("\nPlotting figure with {} files, {} stems, and {} rows".format(
         len(dirs), len(unique_dirs), nrows))
-
-    # Let's first get *validation rankings* for these (shouldn't be using test).
-    LIM1 = 100-1
-    LIM2 = EPOCHS-1
     ranks = defaultdict(list)
 
     for head in unique_dirs:
         info = parse(head, headname, dirs)
         row = get_row_index(head, hparams)
         print("Currently on head {} w/row idx {}".format(head, row))
+        # Validation scores, single and model.
+        ranks['row_to_s_v'].append(   (row, info['valid_err_s_mean'][-1]) )
+        ranks['row_to_m_v'].append(   (row, info['valid_err_m_mean'][-1]) )
+        # Test scores, single and model.
+        ranks['row_to_s_t'].append( (row, info['test_err_s_mean'][-1]) )
+        ranks['row_to_m_t'].append( (row, info['test_err_m_mean'][-1]) )
 
-        # Validation, 100.
-        ranks['row_to_s_100'].append(   (row, info['valid_err_s_mean'][LIM1-1]) )
-        ranks['row_to_m_100'].append(   (row, info['valid_err_m_mean'][LIM1-1]) )
-        # Validation, 200.
-        ranks['row_to_s_200'].append(   (row, info['valid_err_s_mean'][LIM2-1]) )
-        ranks['row_to_m_200'].append(   (row, info['valid_err_m_mean'][LIM2-1]) )
-        # Test, 100.
-        ranks['row_to_s_100_t'].append( (row, info['test_err_s_mean'][LIM1-1]) )
-        ranks['row_to_m_100_t'].append( (row, info['test_err_m_mean'][LIM1-1]) )
-        # Test, 200.
-        ranks['row_to_s_200_t'].append( (row, info['test_err_s_mean'][LIM2-1]) )
-        ranks['row_to_m_200_t'].append( (row, info['test_err_m_mean'][LIM2-1]) )
-
-    # Order the rankings.
+    # Order the rankings, including test even though it's bad practice.
     for key in ranks:
         ranks[key] = sorted(ranks[key], key=lambda x: x[1])
 
-    # Now loop again to plot, this time using the rankings we've stored.
+    # Loop again to plot, this time using the rankings we've stored.
     for head in unique_dirs:
         info = parse(head, headname, dirs)
         row = get_row_index(head, hparams)
 
-        # Validation, single and model.
-        valid_s_info = "single-ep{}-{:.3f}-ep{}-{:.3f}".format(
-            LIM1+1, info['valid_err_s_mean'][LIM1], EPOCHS, info['valid_err_s_mean'][LIM2],
-        )
-        valid_m_info = "model-ep{}-{:.3f}-ep{}-{:.3f}".format(
-            LIM1+1, info['valid_err_m_mean'][LIM1], EPOCHS, info['valid_err_m_mean'][LIM2],
-        )
-
-        # Test, single and model.
-        test_s_info = "single-ep{}-{:.3f}-ep{}-{:.3f}".format(
-            LIM1+1, info['test_err_s_mean'][LIM1], EPOCHS, info['test_err_s_mean'][LIM2],
-        )
-        test_m_info = "model-ep{}-{:.3f}-ep{}-{:.3f}".format(
-            LIM1+1, info['test_err_m_mean'][LIM1], EPOCHS, info['test_err_m_mean'][LIM2],
-        )
+        # Validation and then test labels.
+        valid_s_info = "v_single-ep{}-{:.3f}".format(EPOCHS, info['valid_err_s_mean'][-1])
+        valid_m_info = "v_model-ep{}-{:.3f}".format(EPOCHS, info['valid_err_m_mean'][-1])
+        test_s_info  = "t_single-ep{}-{:.3f}".format(EPOCHS, info['test_err_s_mean'][-1])
+        test_m_info  = "t_model-ep{}-{:.3f}".format(EPOCHS, info['test_err_m_mean'][-1])
 
         # Add validation to plot, column 0.
         axarr_plot(ax, row, 0, info['x'],
@@ -186,20 +168,14 @@ def plot_one_type(headname, figname, hparams):
                    name=head+test_m_info)
 
         # Titles
-        r1 = get_rank(ranks['row_to_s_100'], row)
-        r2 = get_rank(ranks['row_to_m_100'], row)
-        r3 = get_rank(ranks['row_to_s_200'], row)
-        r4 = get_rank(ranks['row_to_m_200'], row)
-        r5 = get_rank(ranks['row_to_s_100_t'], row)
-        r6 = get_rank(ranks['row_to_m_100_t'], row)
-        r7 = get_rank(ranks['row_to_s_200_t'], row)
-        r8 = get_rank(ranks['row_to_m_200_t'], row)
-        title1 = 's{}-m{}-s{}-m{}-rank-{}-{}-{}-{}'.format(LIM1+1, LIM1+1,
-                LIM2+1, LIM2+1, r1, r2, r3, r4)
-        title2 = 's{}-m{}-s{}-m{}-rank-{}-{}-{}-{}'.format(LIM1+1, LIM1+1,
-                LIM2+1, LIM2+1, r5, r6, r7, r8)
-        ax[row,0].set_title('Valid-'+title1, fontsize=title_size)
-        ax[row,1].set_title('Test-'+title2,  fontsize=title_size)
+        r1 = get_rank(ranks['row_to_s_v'], row)
+        r2 = get_rank(ranks['row_to_m_v'], row)
+        r3 = get_rank(ranks['row_to_s_t'], row)
+        r4 = get_rank(ranks['row_to_m_t'], row)
+        title1 = 's,m: {},{}'.format(r1,r2)
+        title2 = 's,m: {},{}'.format(r3,r4)
+        ax[row,0].set_title('Valid Ranks: '+title1, fontsize=title_size)
+        ax[row,1].set_title('Test Ranks: '+title2,  fontsize=title_size)
 
     # Bells and whistles
     for row in range(nrows):
@@ -208,20 +184,19 @@ def plot_one_type(headname, figname, hparams):
             ax[row,col].tick_params(axis='y', labelsize=tick_size)
             ax[row,col].legend(loc="best", prop={'size':legend_size})
             ax[row,col].set_ylim([1.00, 4.00])
-            ax[row,col].set_xlabel("Epochs (55k digits each)", fontsize=xsize)
+            ax[row,col].set_xlabel("Number of Samples (Two Per Epoch)", fontsize=xsize)
             if col == 0:
                 ax[row,col].set_ylabel("Valid Error % (5k digits)", fontsize=ysize)
             elif col == 1:
                 ax[row,col].set_ylabel("Test Error % (10k digits)", fontsize=ysize)
             # Vertical lines for the LIM1, LIM2, as well as burn-in epochs.
-            ax[row,col].axvline(x=LIM1, ls='--', color='blue')
-            ax[row,col].axvline(x=LIM2, ls='--', color='blue')
             ax[row,col].axvline(x=BURN_IN, ls='--', color='red')
     plt.tight_layout()
     plt.savefig(figname)
 
 
 if __name__ == "__main__":
+    """
     # ADJUST for SGD. Note: I didn't run the (0.9, 0.001) combo. I also ran with
     # 0.04 lrates but not including since many subplots makes rendering hard.
     hparams = {
@@ -229,6 +204,7 @@ if __name__ == "__main__":
         'wd':    ['0.0', '0.000001', '0.00001', '0.0001', '0.001'],
     }
     plot_one_type('logs/sgd-tune/', "figures/tune_sgd_coarse.png", hparams)
+    """
 
     # ADJUST for RMSPROP
     hparams = {

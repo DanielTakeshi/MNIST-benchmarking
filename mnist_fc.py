@@ -20,9 +20,9 @@ def get_tf_session(gpumem):
 
 class Evaluator:
 
-    def __init__(self, burn_in_epochs, ylabels):
+    def __init__(self, burn_in_samples, ylabels):
         """ The input `ylabels` is in one-hot form. """
-        self.burn_in_epochs = burn_in_epochs
+        self.burn_in_samples = burn_in_samples
         self.num_labels = ylabels.shape[0]
         self.rcounter = 0
         self.num_rounds_averaged = 0
@@ -31,7 +31,7 @@ class Evaluator:
         assert len(self.y_labels.shape) == 1
 
     def _get_alpha(self):
-        if self.rcounter < self.burn_in_epochs:
+        if self.rcounter < self.burn_in_samples:
             return 1.0
         else:
             self.num_rounds_averaged += 1
@@ -85,8 +85,8 @@ class Classifier:
             'l2_loss': self.l2_loss,
             'y_softmax': self.y_softmax,
         }
-        self.eval_valid = Evaluator(args.burn_in_epochs, self.mnist.validation.labels)
-        self.eval_test  = Evaluator(args.burn_in_epochs, self.mnist.test.labels)
+        self.eval_valid = Evaluator(args.burn_in_samples, self.mnist.validation.labels)
+        self.eval_test  = Evaluator(args.burn_in_samples, self.mnist.test.labels)
         self.sess.run(tf.global_variables_initializer())
         self.debug()
 
@@ -154,7 +154,8 @@ class Classifier:
         """
         By default, `shuffle=True` for `next_batch` but the code internally
         shuffles for the first epoch, then goes through elements sequentially.
-        We subsample so that we evaluate after each *half* epoch.
+        We subsample so that we evaluate after each *half* epoch. So if burn-in
+        is 40 epochs, then we really have 80 burn-in 'samples'.
         """
         args = self.args
         mnist = self.mnist
@@ -164,7 +165,7 @@ class Classifier:
         print("sample | l2_loss (v) | ce_loss (v) | valid_err (s) | valid_err (m) | test_err (s) | test_err (m)")
         sample = 0
 
-        for ep in range(args.num_epochs + args.burn_in_epochs):
+        for ep in range(args.num_epochs + int(args.burn_in_samples/2)):
             num_mbs = int(args.num_train / args.batch_size)
 
             for k in range(1,num_mbs+1):
@@ -206,7 +207,7 @@ if __name__ == '__main__':
     parser.add_argument('--rmsprop_decay', type=float, default=0.9)
     parser.add_argument('--rmsprop_momentum', type=float, default=0.0)
     # Training and evaluation, stuff to mostly tune:
-    parser.add_argument('--burn_in_epochs', type=int, default=40)
+    parser.add_argument('--burn_in_samples', type=int, default=60)
     parser.add_argument('--lrate', type=float, default=0.2)
     parser.add_argument('--l2_reg', type=float, default=0.0)
     parser.add_argument('--optimizer', type=str, default='sgd')
