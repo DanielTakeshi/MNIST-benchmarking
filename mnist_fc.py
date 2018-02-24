@@ -154,47 +154,59 @@ class Classifier:
         """
         By default, `shuffle=True` for `next_batch` but the code internally
         shuffles for the first epoch, then goes through elements sequentially.
+        We subsample so that we evaluate after each *half* epoch.
         """
         args = self.args
         mnist = self.mnist
         feed_valid = {self.x: mnist.validation.images, self.y: mnist.validation.labels}
         feed_test = {self.x: mnist.test.images, self.y: mnist.test.labels}
         print('------------------------')
-        print("epoch | l2_loss (v) | ce_loss (v) | valid_err (s) | valid_err (m) | test_err (s) | test_err (m)")
+        print("sample | l2_loss (v) | ce_loss (v) | valid_err (s) | valid_err (m) | test_err (s) | test_err (m)")
+        sample = 0
 
-        for ep in range(args.num_epochs):
+        for ep in range(args.num_epochs + args.burn_in_epochs):
             num_mbs = int(args.num_train / args.batch_size)
-            for _ in range(num_mbs):
+
+            for k in range(1,num_mbs+1):
                 batch = mnist.train.next_batch(args.batch_size)
                 feed = {self.x: batch[0], self.y: batch[1]}
                 self.sess.run(self.train_step, feed)
-            valid_stats = self.sess.run(self.stats, feed_valid)
-            test_stats  = self.sess.run(self.stats, feed_test)
 
-            valid_err_single = 100*(1.0-valid_stats['accuracy'])
-            valid_err_model  = self.eval_valid.eval(valid_stats['y_softmax'])
-            test_err_single  = 100*(1.0-test_stats['accuracy'])
-            test_err_model   = self.eval_test.eval(test_stats['y_softmax'])
-
-            print("{:5} {:9.4f} {:9.4f} {:10.3f} {:10.3f} {:10.3f} {:10.3f}".format(ep,
-                    valid_stats['l2_loss'], valid_stats['cross_entropy'],
-                    valid_err_single, valid_err_model,
-                    test_err_single, test_err_model))
+                # Attempting to follow pSGLD thinning metric.
+                if k == num_mbs/2 or k == num_mbs:
+                    sample += 1
+                    valid_stats = self.sess.run(self.stats, feed_valid)
+                    test_stats  = self.sess.run(self.stats, feed_test)
+                    valid_err_single = 100*(1.0-valid_stats['accuracy'])
+                    valid_err_model  = self.eval_valid.eval(valid_stats['y_softmax'])
+                    test_err_single  = 100*(1.0-test_stats['accuracy'])
+                    test_err_model   = self.eval_test.eval(test_stats['y_softmax'])
+                    print("{:5} {:9.4f} {:9.4f} {:10.3f} {:10.3f} {:10.3f} {:10.3f}".format(
+                            sample,
+                            valid_stats['l2_loss'], 
+                            valid_stats['cross_entropy'],
+                            valid_err_single, 
+                            valid_err_model,
+                            test_err_single, 
+                            test_err_model)
+                    )
 
 
 if __name__ == '__main__':
+    # TODO: support option for no validation set, even though it's bad ML.
     parser = argparse.ArgumentParser()
     # Bells and whistles
     parser.add_argument('--data_dir', type=str, default='/tmp/tensorflow/mnist/input_data')
     parser.add_argument('--seed', type=int, default=1)
+    parser.add_argument('--no_validation', action='store_true')
     # Training and evaluation, stuff that should stay mostly constant:
     parser.add_argument('--batch_size', type=int, default=100)
-    parser.add_argument('--num_epochs', type=int, default=300) # just run longer
+    parser.add_argument('--num_epochs', type=int, default=100) # NOT including burn-in
     parser.add_argument('--momsgd_momentum', type=float, default=0.99)
     parser.add_argument('--rmsprop_decay', type=float, default=0.9)
     parser.add_argument('--rmsprop_momentum', type=float, default=0.0)
     # Training and evaluation, stuff to mostly tune:
-    parser.add_argument('--burn_in_epochs', type=int, default=30)
+    parser.add_argument('--burn_in_epochs', type=int, default=40)
     parser.add_argument('--lrate', type=float, default=0.2)
     parser.add_argument('--l2_reg', type=float, default=0.0)
     parser.add_argument('--optimizer', type=str, default='sgd')
