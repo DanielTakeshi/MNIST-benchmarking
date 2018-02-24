@@ -26,7 +26,7 @@ lw, ms = 3, 8
 
 # Adjust based on what we did with the scripts. Assumes one sample comes from
 # every half epoch, approximately.
-BURN_IN = 80
+BURN_IN = 60
 SAMPLES = 200 + BURN_IN # Technically we ran 100 ....
 EPOCHS  = 100 # not counting burn-in
 
