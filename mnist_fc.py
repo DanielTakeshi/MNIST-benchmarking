@@ -88,6 +88,20 @@ class Classifier:
         self.eval_valid = Evaluator(args.burn_in_samples, self.mnist.validation.labels)
         self.eval_test  = Evaluator(args.burn_in_samples, self.mnist.test.labels)
         self.sess.run(tf.global_variables_initializer())
+        
+        # Give option to put validation inside the training.
+        if args.no_validation:
+            args.num_train += args.num_valid
+            self.all_images = np.concatenate(
+                    (self.mnist.train.images, self.mnist.validation.images), axis=0
+            )
+            self.all_labels = np.concatenate(
+                    (self.mnist.train.labels, self.mnist.validation.labels), axis=0
+            )
+            assert self.all_images.shape[0] == self.all_labels.shape[0] == args.num_train
+            inds = np.random.permutation( args.num_train )
+            self.all_images = self.all_images[inds]
+            self.all_labels = self.all_labels[inds]
         self.debug()
 
 
@@ -122,6 +136,9 @@ class Classifier:
         print("Here are the variables in our network:")
         for item in self.variables:
             print(item)
+        if args.no_validation:
+            print("\ntrain AND valid, images: {}".format(self.all_images.shape))
+            print("train AND valid, labels: {}".format(self.all_labels.shape))
         print("(End of debug prints)\n")
 
 
@@ -156,6 +173,10 @@ class Classifier:
         shuffles for the first epoch, then goes through elements sequentially.
         We subsample so that we evaluate after each *half* epoch. So if burn-in
         is 40 epochs, then we really have 80 burn-in 'samples'.
+
+        It now supports having the validation be within the training data. As a
+        sanity check, therefore, the validation performance (which we still
+        compute) should be 'essentially' perfect.
         """
         args = self.args
         mnist = self.mnist
@@ -164,12 +185,17 @@ class Classifier:
         print('------------------------')
         print("sample | l2_loss (v) | ce_loss (v) | valid_err (s) | valid_err (m) | test_err (s) | test_err (m)")
         sample = 0
+        bs = args.batch_size
 
         for ep in range(args.num_epochs + int(args.burn_in_samples/2)):
-            num_mbs = int(args.num_train / args.batch_size)
+            num_mbs = int(args.num_train / bs)
 
             for k in range(1,num_mbs+1):
-                batch = mnist.train.next_batch(args.batch_size)
+                if args.no_validation:
+                    s = (k-1) * bs
+                    batch = (self.all_images[s:s+bs], self.all_labels[s:s+bs])
+                else:
+                    batch = mnist.train.next_batch(args.batch_size)
                 feed = {self.x: batch[0], self.y: batch[1]}
                 self.sess.run(self.train_step, feed)
 
@@ -194,7 +220,6 @@ class Classifier:
 
 
 if __name__ == '__main__':
-    # TODO: support option for no validation set, even though it's bad ML.
     parser = argparse.ArgumentParser()
     # Bells and whistles
     parser.add_argument('--data_dir', type=str, default='/tmp/tensorflow/mnist/input_data')
@@ -220,7 +245,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print("Our arguments:\n{}".format(args))
 
-    sess = get_tf_session(gpumem=1.0)
+    sess = get_tf_session(gpumem=0.9)
     np.random.seed(args.seed)
     random.seed(args.seed)
     tf.set_random_seed(args.seed)
