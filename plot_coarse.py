@@ -40,6 +40,7 @@ def parse(file_head, headname, dirs):
     """
     files = sorted([x for x in dirs if file_head in x])
     info = defaultdict(list)
+    print("\nInside parse({},{},dirs)".format(file_head,headname))
 
     for ff in files:
         path = headname + ff
@@ -49,8 +50,8 @@ def parse(file_head, headname, dirs):
         while True:
             if 'sample | l2_loss (v)' in all_lines[idx]:
                 all_lines = all_lines[idx+1:]
-                #print("found info for {}, at line {}, w/{} data points".format(
-                #        ff, idx, len(all_lines)))
+                print("found info for {}, at line {}, w/{} data points".format(
+                        path, idx, len(all_lines)))
                 break
             idx += 1
             if idx > 50:
@@ -113,12 +114,28 @@ def plot_one_type(headname, figname, hparams):
     process. We'll have to form a ranking and add to the plot titles.
     """
     dirs = sorted([e for e in os.listdir(headname) if 'seed' in e])
-    unique_dirs = sorted( list( set([x[:-1].replace('seed-','') for x in dirs]) ) )
+
+    # Had to change this a bit to work if the seeds have multiple digits. Oops.
+    # Either it ends with `seed-x` or `seed-xy`, so deal with both cases.
+    unique_dirs = set()
+    for x in dirs:
+        if x[-2] == '-':
+            xnew = x[:-1].replace('seed-','')
+        elif x[-3] == '-':
+            xnew = x[:-2].replace('seed-','')
+        else:
+            raise ValueError()
+        unique_dirs.add(xnew)
+    unique_dirs = sorted(list(unique_dirs))
+
     nrows = len(hparams['lrate']) * len(hparams['wd'])
     ncols = 2
     fig,ax = plt.subplots(nrows, ncols, figsize=(10*ncols,10*nrows))
     print("\nPlotting figure with {} files, {} stems, and {} rows".format(
         len(dirs), len(unique_dirs), nrows))
+    print("Unique dirs (well, 'stems' as I call them):")
+    for ud in unique_dirs:
+        print(ud)
     ranks = defaultdict(list)
 
     for head in unique_dirs:
@@ -126,8 +143,8 @@ def plot_one_type(headname, figname, hparams):
         row = get_row_index(head, hparams)
         print("Currently on head {} w/row idx {}".format(head, row))
         # Validation scores, single and model.
-        ranks['row_to_s_v'].append(   (row, info['valid_err_s_mean'][-1]) )
-        ranks['row_to_m_v'].append(   (row, info['valid_err_m_mean'][-1]) )
+        ranks['row_to_s_v'].append( (row, info['valid_err_s_mean'][-1]) )
+        ranks['row_to_m_v'].append( (row, info['valid_err_m_mean'][-1]) )
         # Test scores, single and model.
         ranks['row_to_s_t'].append( (row, info['test_err_s_mean'][-1]) )
         ranks['row_to_m_t'].append( (row, info['test_err_m_mean'][-1]) )
@@ -196,19 +213,16 @@ def plot_one_type(headname, figname, hparams):
 
 
 if __name__ == "__main__":
-    """
-    # ADJUST for SGD. Note: I didn't run the (0.9, 0.001) combo. I also ran with
-    # 0.04 lrates but not including since many subplots makes rendering hard.
-    hparams = {
-        'lrate': ['0.07', '0.1', '0.3', '0.5', '0.7', '0.9'],
-        'wd':    ['0.0', '0.000001', '0.00001', '0.0001', '0.001'],
-    }
-    plot_one_type('logs/sgd-tune/', "figures/tune_sgd_coarse.png", hparams)
-    """
-
-    # ADJUST for RMSPROP
+    # RMSProp, coarse.
     hparams = {
         'lrate': ['0.01', '0.005', '0.001', '0.0005', '0.0001'],
         'wd':    ['0.0', '0.000001', '0.00001', '0.0001'],
     }
     plot_one_type('logs/rmsprop-tune/', "figures/tune_rmsprop_coarse.png", hparams)
+
+    # RMSProp, fine. These have 20 random seeds.
+    hparams = {
+        'lrate': ['0.0001', '0.0002', '0.0003', '0.0004', '0.0005'],
+        'wd':    ['0.000001', '0.00001'],
+    }
+    plot_one_type('logs/rmsprop-fine-tune/', "figures/tune_rmsprop_fine.png", hparams)
