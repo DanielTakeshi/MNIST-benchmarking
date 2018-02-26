@@ -13,3 +13,10 @@ validations:
 5. lrate 0.005, wd 0.000001, v=1.390, t=1.535
 
 These are average values over 4 standard deviations. BTW.
+
+Fine-tuned, ordered by validation ranks and one standard deviation:
+
+1. lrate 0.001, wd 0.000001, v=1.259, t=1.404 (+/- 0.06) 
+2. lrate 0.002, wd 0.000001, v=1.262, t=1.328 (+/- 0.05)
+3. lrate 0.003, wd 0.000001, v=1.318, t=1.390 (+/- 0.08)
+4. lrate 0.002, wd 0.00001,  v=1.320, t=1.453 (+/- 0.06)

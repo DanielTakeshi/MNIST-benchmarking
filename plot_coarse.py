@@ -189,8 +189,8 @@ def plot_one_type(headname, figname, hparams):
         r2 = get_rank(ranks['row_to_m_v'], row)
         r3 = get_rank(ranks['row_to_s_t'], row)
         r4 = get_rank(ranks['row_to_m_t'], row)
-        title1 = 's,m: {},{}'.format(r1,r2)
-        title2 = 's,m: {},{}'.format(r3,r4)
+        title1 = 's,m: {},{} (m +/- {:.2f})'.format(r1,r2,info['valid_err_m_std'][-1])
+        title2 = 's,m: {},{} (m +/- {:.2f})'.format(r3,r4,info['test_err_m_std'][-1])
         ax[row,0].set_title('Valid Ranks: '+title1, fontsize=title_size)
         ax[row,1].set_title('Test Ranks: '+title2,  fontsize=title_size)
 
@@ -222,7 +222,7 @@ if __name__ == "__main__":
 
     # RMSProp, fine. These have 20 random seeds.
     hparams = {
-        'lrate': ['0.0001', '0.0002', '0.0003', '0.0004', '0.0005'],
+        'lrate': ['0.001', '0.002', '0.003', '0.004', '0.005'],
         'wd':    ['0.000001', '0.00001'],
     }
     plot_one_type('logs/rmsprop-fine-tune/', "figures/tune_rmsprop_fine.png", hparams)
