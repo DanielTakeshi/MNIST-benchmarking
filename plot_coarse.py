@@ -213,16 +213,5 @@ def plot_one_type(headname, figname, hparams):
 
 
 if __name__ == "__main__":
-    # RMSProp, coarse.
-    hparams = {
-        'lrate': ['0.01', '0.005', '0.001', '0.0005', '0.0001'],
-        'wd':    ['0.0', '0.000001', '0.00001', '0.0001'],
-    }
-    plot_one_type('logs/rmsprop-tune/', "figures/tune_rmsprop_coarse.png", hparams)
-
-    # RMSProp, fine. These have 20 random seeds.
-    hparams = {
-        'lrate': ['0.001', '0.002', '0.003', '0.004', '0.005'],
-        'wd':    ['0.000001', '0.00001'],
-    }
-    plot_one_type('logs/rmsprop-fine-tune/', "figures/tune_rmsprop_fine.png", hparams)
+    stuff = pn.FEB26_NOVALID
+    plot_one_type(stuff['logdir'], stuff['figdir'], stuff['hparams'])
