@@ -46,8 +46,7 @@ class Regressor:
         self.channels = 1
         if args.add_distractor:
             inds = np.random.permutation(len(self.y_train))[:args.num_train]
-            others = self.X_train_all[inds]
-            self.X_train = np.concatenate( (self.X_train,others), axis=1)
+            self.X_train = np.concatenate((self.X_train, self.X_train_all[inds]), axis=1)
             self.channels = 2
 
         # Placeholders, network output, losses.
@@ -156,12 +155,15 @@ class Regressor:
                 feed = {self.x: batch[0], self.y: batch[1]}
                 _, l2_loss, reg_loss = self.sess.run(train_stuff, feed)
 
+            if args.add_distractor:
+                inds_v = np.random.permutation(args.num_valid)
+                inds_t = np.random.permutation(args.num_test)
+                feed_valid[self.x] = np.concatenate((self.X_valid, self.X_valid[inds_v]), axis=1)
+                feed_test[self.x]  = np.concatenate((self.X_test,  self.X_test[inds_t]), axis=1)
             y_pred_valid = self.sess.run(self.y_pred, feed_valid)
             y_pred_test  = self.sess.run(self.y_pred, feed_test)
             valid_acc, valid_diff = self.get_acc_diff(y_pred_valid, self.y_valid)
             test_acc, test_diff   = self.get_acc_diff(y_pred_test, self.y_test)
-            #print(y_pred_test[:20].T)
-            #print(self.y_test[:20].T)
 
             print("\n  ************ After Epoch %i ************" % (epoch))
             elapsed_time_hours = (time.time() - start_time) / (60.0 ** 2)
@@ -189,7 +191,7 @@ if __name__ == '__main__':
     parser.add_argument('--rmsprop_decay', type=float, default=0.9)
     parser.add_argument('--rmsprop_momentum', type=float, default=0.0)
     # Training and evaluation, stuff to mostly tune:
-    parser.add_argument('--lrate', type=float, default=0.0001)
+    parser.add_argument('--lrate', type=float, default=0.001)
     parser.add_argument('--l2_reg', type=float, default=0.00001)
     parser.add_argument('--optimizer', type=str, default='adam')
     # Network and data. the 784-400-400-10 seems a common benchmark.
