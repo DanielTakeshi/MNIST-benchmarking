@@ -1,5 +1,5 @@
 """ Use this for not classification, but literally predicting the target digit. """
-import argparse, random, sys
+import argparse, logz, os, random, sys, time
 from tensorflow.examples.tutorials.mnist import input_data
 import tensorflow as tf
 import numpy as np
@@ -30,23 +30,30 @@ class Regressor:
         assert self.mnist.validation.labels.shape[0] == args.num_valid
         assert self.mnist.test.labels.shape[0] == args.num_test
 
-        # The data
-        self.X_train = self.mnist.train.images
-        self.y_train = np.expand_dims(np.argmax(self.mnist.train.labels, axis=1), 1)
+        # All three datasets.
+        self.X_train_all = self.mnist.train.images
+        self.y_train_all = np.expand_dims(np.argmax(self.mnist.train.labels, axis=1), 1)
         self.X_valid = self.mnist.validation.images
         self.y_valid = np.expand_dims(np.argmax(self.mnist.validation.labels, axis=1), 1)
-        self.X_test  = self.mnist.test.images
-        self.y_test  = np.expand_dims(np.argmax(self.mnist.test.labels, axis=1), 1)
+        self.X_test = self.mnist.test.images
+        self.y_test = np.expand_dims(np.argmax(self.mnist.test.labels, axis=1), 1)
 
         # Test subsets of the training data.
-        inds = np.random.permutation(len(self.y_train))[:args.num_train]
-        self.X_train = self.X_train[inds]
-        self.y_train = self.y_train[inds]
+        inds = np.random.permutation(len(self.y_train_all))[:args.num_train]
+        self.X_train = self.X_train_all[inds]
+        self.y_train = self.y_train_all[inds]
+
+        self.channels = 1
+        if args.add_distractor:
+            inds = np.random.permutation(len(self.y_train))[:args.num_train]
+            others = self.X_train_all[inds]
+            self.X_train = np.concatenate( (self.X_train,others), axis=1)
+            self.channels = 2
 
         # Placeholders, network output, losses.
-        self.x = tf.placeholder(tf.float32, [None, 784])
+        self.x = tf.placeholder(tf.float32, [None, 784*self.channels])
         self.y = tf.placeholder(tf.float32, [None, 1])
-        self.y_pred = self.make_network(self.x)
+        self.y_pred = self.make_network(self.x, self.channels)
         self.reg_loss = tf.reduce_mean( tf.square(self.y_pred-self.y) )
         self.variables = tf.trainable_variables()
         self.l2_loss = args.l2_reg * \
@@ -78,11 +85,11 @@ class Regressor:
             raise ValueError()
 
 
-    def make_network(self, x):
+    def make_network(self, x, channels=None):
         if self.args.net_type == 'ff':
             return self.make_ff(x)
         elif self.args.net_type == 'cnn':
-            return self.make_cnn(x)
+            return self.make_cnn(x, channels)
         else:
             raise ValueError()
 
@@ -105,8 +112,8 @@ class Regressor:
             return x
 
 
-    def make_cnn(self, x):
-        x = tf.transpose(tf.reshape(x, [-1, 1, 28, 28]), [0, 2, 3, 1])
+    def make_cnn(self, x, channels):
+        x = tf.transpose(tf.reshape(x, [-1, channels, 28, 28]), [0, 2, 3, 1])
         with tf.variable_scope('cnn'):
             x = tf.keras.layers.Conv2D(filters=32, kernel_size=[5,5], padding='SAME')(x)
             x = tf.nn.relu(x)
@@ -133,12 +140,10 @@ class Regressor:
 
 
     def train(self):
+        start_time = time.time()
         args = self.args
-        mnist = self.mnist
         feed_valid = {self.x: self.X_valid, self.y: self.y_valid}
         feed_test  = {self.x: self.X_test,  self.y: self.y_test}
-        print('------------------------')
-        print("epoch | l2_loss | reg_loss | valid_acc | valid_diff |  test_acc | test_diff")
         bs = args.batch_size
         train_stuff = [self.train_step, self.l2_loss, self.reg_loss]
 
@@ -157,9 +162,18 @@ class Regressor:
             test_acc, test_diff   = self.get_acc_diff(y_pred_test, self.y_test)
             #print(y_pred_test[:20].T)
             #print(self.y_test[:20].T)
-            print("{:5} {:9.4f} {:9.4f} {:10.3f} {:10.3f} {:10.3f} {:10.3f}".format(
-                    epoch, l2_loss, reg_loss, valid_acc, valid_diff, test_acc, test_diff)
-            )
+
+            print("\n  ************ After Epoch %i ************" % (epoch))
+            elapsed_time_hours = (time.time() - start_time) / (60.0 ** 2)
+            logz.log_tabular("ValidAvgAcc", valid_acc)
+            logz.log_tabular("TestAvgAcc", test_acc)
+            logz.log_tabular("ValidAvgDiff", valid_diff)
+            logz.log_tabular("TestAvgDiff", test_diff)
+            logz.log_tabular("RegressionLoss", reg_loss)
+            logz.log_tabular("L2RegLoss", l2_loss)
+            logz.log_tabular("Epoch", epoch)
+            #logz.log_tabular("ElapsedTimeHours", elapsed_time_hours)
+            logz.dump_tabular()
 
 
 if __name__ == '__main__':
@@ -167,6 +181,7 @@ if __name__ == '__main__':
     # Bells and whistles
     parser.add_argument('--data_dir', type=str, default='/tmp/tensorflow/mnist/input_data')
     parser.add_argument('--seed', type=int, default=1)
+    parser.add_argument('--add_distractor', action='store_true')
     # Training and evaluation, stuff that should stay mostly constant:
     parser.add_argument('--batch_size', type=int, default=100)
     parser.add_argument('--num_epochs', type=int, default=100)
@@ -185,6 +200,12 @@ if __name__ == '__main__':
     parser.add_argument('--num_valid', type=int, default=5000)
     args = parser.parse_args()
     print("Our arguments:\n{}".format(args))
+
+    logdir = 'logs/seed-{}-numtrain-{}-epochs-{}-distractor-{}'.format(args.seed,
+            args.num_train, args.num_epochs, args.add_distractor)
+    print("logdir: {}\n".format(logdir))
+    assert not os.path.exists(logdir), "error: {} exists!".format(logdir)
+    logz.configure_output_dir(logdir)
 
     sess = get_tf_session(gpumem=0.8)
     np.random.seed(args.seed)
