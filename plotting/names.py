@@ -5,22 +5,22 @@ bottom, most recent at the top.
 """
 
 ATTRIBUTES = [
-    'ValidAvgAcc', 'ValidAvgDiff',
-    'TestAvgAcc',  'TestAvgDiff',
-    'RegressLoss', 'L2RegLoss',
-    'Img1ValidL2', 'Img2ValidL2',
-    'Img1TestL2',  'Img2TestL2',
+    'ValidAvgAcc',   'ValidAvgDiff',
+    'TestAvgAcc',    'TestAvgDiff',
+    'RegressLoss',   'L2RegLoss',
+    'Img1AvgValL2',  'Img2AvgValL2',
+    'Img1AvgTestL2', 'Img2AvgTestL2',
 ]
 
-s1='train-55000-epocs-50-bsize-100-arch-1-bnorm-False-seed'
-s2='train-55000-epocs-50-bsize-100-arch-2-bnorm-False-seed'
-MAR06_NUMTRAIN_55000 = {
+s1='train-2600-epochs-100-bsize-200-arch-1-bnorm-False-seed'
+s2='train-2600-epochs-100-bsize-200-arch-2-bnorm-False-seed'
+MAR07_FIRST_TRY = {
     'directories': [
             ['{}-{}'.format(s1,b) for b in range(0,4)],
             ['{}-{}'.format(s2,b) for b in range(0,4)],
     ],
     'names': [
-            'tr-55000-eps-50-bs-100-arch-1', 
-            'tr-55000-eps-50-bs-100-arch-2',
+            'tr-2600-eps-100-bs-200-arch-1', 
+            'tr-2600-eps-100-bs-200-arch-2',
     ],
 }

@@ -85,13 +85,12 @@ def plot(all_info, figname):
                 data_mean = np.mean(data, axis=0)
                 data_std  = np.std(data, axis=0)
                 label = "{}; last{}_avg({:.3f})".format(nn, past, np.mean(data_mean[-past:]))
-                axes[r,c].plot(xc, data_mean, '-', lw=lw, color=cc, label=label)
                 axes[r,c].fill_between(xc,
                                        data_mean-data_std,
                                        data_mean+data_std,
                                        alpha=error_region_alpha,
                                        facecolor=cc)
-                axes[r,c].set_ylabel("{}".format(attr), fontsize=ysize)
+                axes[r,c].plot(xc, data_mean, '-', lw=lw, color=cc, label=label)
 
     # Bells and whistles
     attr_idx = 0
@@ -103,6 +102,8 @@ def plot(all_info, figname):
             axes[r,c].tick_params(axis='y', labelsize=tick_size)
             axes[r,c].set_xlabel("Training Epochs", fontsize=xsize)
             axes[r,c].set_ylabel("{}".format(attr), fontsize=ysize)
+            if 'Acc' in attr:
+                axes[r,c].set_ylim([0.0, 1.0])
             axes[r,c].set_title("{}".format(attr), fontsize=title_size)
             axes[r,c].legend(loc='best', ncol=1, prop={'size':legend_size})
     plt.tight_layout()
@@ -111,4 +112,4 @@ def plot(all_info, figname):
 
 
 if __name__ == "__main__":
-    plot(names.MAR06_NUMTRAIN_55000, 'figures/mar06_numtrain_55500.png')
+    plot(names.MAR07_FIRST_TRY, 'figures/mar07_first_try.png')

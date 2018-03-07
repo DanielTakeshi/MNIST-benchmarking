@@ -3,6 +3,12 @@
 Tuning of hyperparameters. Use the shell scripts and just use file redirecting,
 as in `python stuff.py > file.txt`.
 
+Contents:
+
+- [RMSProp Results](#rmsprop-results)
+- [Regressing on Target Image](#predicting-the-target-image)
+
+
 ## RMSProp Results
 
 Some RMSProp observations after the coarse stage, with 55k training, best
@@ -49,3 +55,10 @@ correct target digit) is very high. Note that for the img1 and img2 L2 norms, I
 forgot to take an average over those so the values are much larger than they
 seem, and this also explains the discrepancy as there are 10k training images
 and 5k validation images.
+
+For smaller minibatch sizes, the results will be slightly worse. Be careful that
+you're using all the minibatches, by the way, so the batch size divides the
+training data size. It might also be better to randomize the data after each
+epoch with such a small dataset.
+
+**TODO**
