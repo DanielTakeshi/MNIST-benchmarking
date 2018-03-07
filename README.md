@@ -39,4 +39,9 @@ trials.
 ## Predicting the Target Image
 
 I'm not doing classification, but literally predicting the digit, so the output
-is a scalar.
+is a scalar. Here's what happens when you use the full data:
+
+![.](figures/mar06_numtrain_55500.png?raw=true)
+
+So yes, it's a pretty easy task. Note that for the img1 and img2 L2 norms, I
+forgot to take an average over those.
