@@ -39,9 +39,13 @@ trials.
 ## Predicting the Target Image
 
 I'm not doing classification, but literally predicting the digit, so the output
-is a scalar. Here's what happens when you use the full data:
+is a scalar. Here's what happens when you use the full data with "reasonable"
+hyperparameters of batch size 100 and Adam learning rate 0.001:
 
 ![.](figures/mar06_numtrain_55500.png?raw=true)
 
-So yes, it's a pretty easy task. Note that for the img1 and img2 L2 norms, I
-forgot to take an average over those.
+So yes, it's a pretty easy task as predictive accuracy (being within 0.5 of the
+correct target digit) is very high. Note that for the img1 and img2 L2 norms, I
+forgot to take an average over those so the values are much larger than they
+seem, and this also explains the discrepancy as there are 10k training images
+and 5k validation images.

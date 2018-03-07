@@ -160,7 +160,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print("Our arguments:\n{}".format(args))
 
-    logdir = 'logs/train-{}-epocs-{}-bsize-{}-arch-{}-bnorm-{}-seed-{}'.format(
+    logdir = 'logs/train-{}-epochs-{}-bsize-{}-arch-{}-bnorm-{}-seed-{}'.format(
         args.num_train, args.num_epochs, args.batch_size, args.cnn_arch,
         args.batch_norm, args.seed)
     print("logdir: {}\n".format(logdir))
