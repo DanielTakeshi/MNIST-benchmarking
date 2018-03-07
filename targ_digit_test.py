@@ -56,9 +56,12 @@ class Regressor:
 
 
     def debug(self):
-        print("Here are the variables in our network:")
+        print("\nHere are the variables in our network:")
+        params = 0
         for item in self.variables:
             print(item)
+            params += np.prod(item.get_shape().as_list())
+        print("Total net parameters: {}\n".format(params))
         print("X_train.shape: {}".format(self.X_train.shape))
         print("y_train.shape: {}".format(self.y_train.shape))
         print("X_valid.shape: {}".format(self.X_valid.shape))
@@ -69,6 +72,13 @@ class Regressor:
 
     
     def get_acc_diff(self, y_pred, y_targ):
+        """ 
+        Accuracy is defined as being within 0.5 of the correct target digit, so
+        effectively we're rounding. Actually this also means getting, e.g., 9.6
+        is wrong. We really want the values to be close. Note that our
+        prediction network isn't guaranteed to be in the range (i.e. we don't
+        always force a tanh/sigmoid on the output, for instance).
+        """
         assert y_pred.shape == y_targ.shape and len(y_pred.shape) == 2
         acc = 0.0
         for (yp,yt) in zip(y_pred, y_targ):
@@ -82,8 +92,8 @@ class Regressor:
     def train(self):
         start_time = time.time()
         args = self.args
-        feed_valid = {self.x: self.X_valid, self.y: self.y_valid}
-        feed_test  = {self.x: self.X_test,  self.y: self.y_test}
+        feed_valid = {self.x: self.X_valid, self.y: self.y_valid, self.bnorm: 0}
+        feed_test  = {self.x: self.X_test,  self.y: self.y_test,  self.bnorm: 0}
         train_stuff = [self.train_step, self.l2_loss, self.reg_loss]
         bs = args.batch_size
         num_mbs = int(args.num_train / bs)
@@ -93,7 +103,7 @@ class Regressor:
             for k in range(num_mbs):
                 s = k * bs
                 batch = (self.X_train[s:s+bs], self.y_train[s:s+bs])
-                feed = {self.x: batch[0], self.y: batch[1]}
+                feed = {self.x: batch[0], self.y: batch[1], self.bnorm: 1}
                 _, l2_loss, reg_loss = self.sess.run(train_stuff, feed)
 
             # Unlike training, for valid/test we'll randomize that second image.
@@ -101,21 +111,28 @@ class Regressor:
             inds_t = np.random.permutation(args.num_test)
             feed_valid[self.x] = np.concatenate((self.X_valid, self.X_valid[inds_v]), axis=1)
             feed_test[self.x]  = np.concatenate((self.X_test,  self.X_test[inds_t]), axis=1)
-            y_pred_valid = self.sess.run(self.y_pred, feed_valid)
-            y_pred_test  = self.sess.run(self.y_pred, feed_test)
-            valid_acc, valid_diff = self.get_acc_diff(y_pred_valid, self.y_valid)
-            test_acc, test_diff   = self.get_acc_diff(y_pred_test, self.y_test)
+
+            # We get the _layers_ for more fine-grained logging.
+            layers_v = self.sess.run(self.layers, feed_valid)
+            layers_t = self.sess.run(self.layers, feed_test)
+            valid_acc, valid_diff = self.get_acc_diff(layers_v['final'], self.y_valid)
+            test_acc,  test_diff  = self.get_acc_diff(layers_t['final'], self.y_test)
 
             print("\n  ************ After Epoch %i ************" % (epoch))
             elapsed_time_hours = (time.time() - start_time) / (60.0 ** 2)
-            logz.log_tabular("ValidAvgAcc", valid_acc)
-            logz.log_tabular("TestAvgAcc", test_acc)
+            logz.log_tabular("ValidAvgAcc",  valid_acc)
+            logz.log_tabular("TestAvgAcc",   test_acc)
             logz.log_tabular("ValidAvgDiff", valid_diff)
-            logz.log_tabular("TestAvgDiff", test_diff)
-            logz.log_tabular("RegressionLoss", reg_loss)
-            logz.log_tabular("L2RegLoss", l2_loss)
-            logz.log_tabular("Epoch", epoch)
-            #logz.log_tabular("ElapsedTimeHours", elapsed_time_hours)
+            logz.log_tabular("TestAvgDiff",  test_diff)
+            logz.log_tabular("RegressLoss",  reg_loss)
+            logz.log_tabular("L2RegLoss",    l2_loss)
+            if args.cnn_arch == 2:
+                logz.log_tabular("Img1ValidL2", np.linalg.norm(layers_v['x1-branch']))
+                logz.log_tabular("Img2ValidL2", np.linalg.norm(layers_v['x2-branch']))
+                logz.log_tabular("Img1TestL2",  np.linalg.norm(layers_t['x1-branch']))
+                logz.log_tabular("Img2TestL2",  np.linalg.norm(layers_t['x2-branch']))
+            logz.log_tabular("TrainEpochs",  epoch)
+            logz.log_tabular("TimeHours",    elapsed_time_hours)
             logz.dump_tabular()
 
 
@@ -143,8 +160,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print("Our arguments:\n{}".format(args))
 
-    logdir = 'logs/numtrain-{}-epochs-{}-bsize-{}-arch-{}-seed-{}'.format(
-        args.num_train, args.num_epochs, args.batch_size, args.cnn_arch, args.seed)
+    logdir = 'logs/train-{}-epocs-{}-bsize-{}-arch-{}-bnorm-{}-seed-{}'.format(
+        args.num_train, args.num_epochs, args.batch_size, args.cnn_arch,
+        args.batch_norm, args.seed)
     print("logdir: {}\n".format(logdir))
     assert not os.path.exists(logdir), "error: {} exists!".format(logdir)
     logz.configure_output_dir(logdir)
