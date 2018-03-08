@@ -17,7 +17,7 @@ tick_size = 18
 legend_size = 19
 xsize, ysize = 19, 19
 lw, ms = 3, 8
-COLORS = ['red', 'blue']
+COLORS = ['red', 'blue', 'yellow']
 
 
 def get_info(dirs):
@@ -112,4 +112,5 @@ def plot(all_info, figname):
 
 
 if __name__ == "__main__":
-    plot(names.MAR07_FIRST_TRY, 'figures/mar07_first_try.png')
+    plot(names.MAR07_1000_EPOCHS, 'figures/mar07_1000_epochs.png')
+    #plot(names.MAR07_FIRST_TRY, 'figures/mar07_first_try.png')

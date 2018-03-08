@@ -12,6 +12,24 @@ ATTRIBUTES = [
     'Img1AvgTestL2', 'Img2AvgTestL2',
 ]
 
+
+s1='train-2600-epochs-1000-bsize-200-arch-1-lrate-0.001-seed'
+s2='train-2600-epochs-1000-bsize-200-arch-2-lrate-0.001-seed'
+s3='train-2600-epochs-1000-bsize-200-arch-2-lrate-0.0001-seed'
+MAR07_1000_EPOCHS = {
+    'directories': [
+            ['{}-{}'.format(s1,b) for b in range(0,4)],
+            ['{}-{}'.format(s2,b) for b in range(0,4)],
+            ['{}-{}'.format(s3,b) for b in range(0,4)],
+    ],
+    'names': [
+            'tr-2600-eps-1000-bs-200-arch-1-lr-0.001', 
+            'tr-2600-eps-1000-bs-200-arch-2-lr-0.001',
+            'tr-2600-eps-1000-bs-200-arch-2-lr-0.0001',
+    ],
+}
+
+
 s1='train-2600-epochs-100-bsize-200-arch-1-bnorm-False-seed'
 s2='train-2600-epochs-100-bsize-200-arch-2-bnorm-False-seed'
 MAR07_FIRST_TRY = {

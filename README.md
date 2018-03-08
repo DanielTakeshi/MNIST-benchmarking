@@ -61,4 +61,12 @@ you're using all the minibatches, by the way, so the batch size divides the
 training data size. It might also be better to randomize the data after each
 epoch with such a small dataset.
 
-**TODO**
+I did a minibatch size of 200 here, and with just 2600 data points. Here are the
+results after 1000 epochs:
+
+![.](figures/mar07_1000_epochs.png?raw=true)
+
+Wow, the training accuracy did not even asympotote ... and to be clear we're not
+memorizing anything, this is held-out validation and testing ... and clearly
+learning rate of 0.001 is better in this case. I thought there would be some
+more instability with just 2600 data points.
