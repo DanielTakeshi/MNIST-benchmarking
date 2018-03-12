@@ -70,12 +70,12 @@ class Regressor:
         print("y_test.shape:  {}".format(self.y_test.shape))
         print("(End of debug prints)\n")
 
-    
+
     def get_acc_diff(self, y_pred, y_targ):
-        """ 
+        """
         Accuracy is defined as being within 0.5 of the correct target digit, so
         effectively we're rounding. Actually this also means getting, e.g., 9.6
-        is wrong. We really want the values to be close. Note that our
+        or -0.6 is wrong. We really want the values to be close. Note that our
         prediction network isn't guaranteed to be in the range (i.e. we don't
         always force a tanh/sigmoid on the output, for instance).
         """
@@ -100,13 +100,18 @@ class Regressor:
         print("Training {} epochs, {} m-batches each".format(args.num_epochs, num_mbs))
 
         for epoch in range(1,args.num_epochs+1):
+            # Since we have smaller datasets, let's actually shuffle.
+            inds = np.random.permutation(args.num_train)
+            self.X_train = self.X_train[inds]
+            self.y_train = self.y_train[inds]
+
             for k in range(num_mbs):
                 s = k * bs
                 batch = (self.X_train[s:s+bs], self.y_train[s:s+bs])
                 feed = {self.x: batch[0], self.y: batch[1], self.bnorm: 1}
                 _, l2_loss, reg_loss = self.sess.run(train_stuff, feed)
 
-            # Unlike training, for valid/test we'll randomize that second image.
+            # Unlike training, we randomize second image for valid/test.
             inds_v = np.random.permutation(args.num_valid)
             inds_t = np.random.permutation(args.num_test)
             feed_valid[self.x] = np.concatenate((self.X_valid, self.X_valid[inds_v]), axis=1)
@@ -127,10 +132,10 @@ class Regressor:
             logz.log_tabular("RegressLoss",  reg_loss)
             logz.log_tabular("L2RegLoss",    l2_loss)
             if args.cnn_arch == 2:
-                logz.log_tabular("Img1AvgValL2",  np.linalg.norm(np.mean(layers_v['x1-branch'],axis=0)))
-                logz.log_tabular("Img2AvgValL2",  np.linalg.norm(np.mean(layers_v['x2-branch'],axis=0)))
-                logz.log_tabular("Img1AvgTestL2", np.linalg.norm(np.mean(layers_t['x1-branch'],axis=0)))
-                logz.log_tabular("Img2AvgTestL2", np.linalg.norm(np.mean(layers_t['x2-branch'],axis=0)))
+                logz.log_tabular("Img1AvgValL2",  np.linalg.norm(np.mean(layers_v['x1-branch'],0)))
+                logz.log_tabular("Img2AvgValL2",  np.linalg.norm(np.mean(layers_v['x2-branch'],0)))
+                logz.log_tabular("Img1AvgTestL2", np.linalg.norm(np.mean(layers_t['x1-branch'],0)))
+                logz.log_tabular("Img2AvgTestL2", np.linalg.norm(np.mean(layers_t['x2-branch'],0)))
             logz.log_tabular("TrainEpochs",  epoch)
             logz.log_tabular("TimeHours",    elapsed_time_hours)
             logz.dump_tabular()

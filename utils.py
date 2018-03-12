@@ -35,7 +35,7 @@ def get_optimizer(args):
 
 
 def build_cnn(*, args, bn_train, s, osize=1, sname='mnist', renorm=True):
-    """ 
+    """
     We assume the output size is 1, meaning that the result has shape (?,1).
     Returns a dictionary with final and intermediate layers, for intermediate
     inspection.
