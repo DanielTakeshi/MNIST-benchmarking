@@ -44,6 +44,8 @@ trials.
 
 ## Predicting the Target Image
 
+### Full-Batch
+
 I'm not doing classification, but literally predicting the digit, so the output
 is a scalar. Here's what happens when you use the full data with "reasonable"
 hyperparameters of batch size 100 and Adam learning rate 0.001:
@@ -55,6 +57,8 @@ correct target digit) is very high. Note that for the img1 and img2 L2 norms, I
 forgot to take an average over those so the values are much larger than they
 seem, and this also explains the discrepancy as there are 10k training images
 and 5k validation images.
+
+### 2.6k samples
 
 For smaller minibatch sizes, the results will be slightly worse. Be careful that
 you're using all the minibatches, by the way, so the batch size divides the
@@ -70,3 +74,10 @@ Wow, the training accuracy did not even asympotote ... and to be clear we're not
 memorizing anything, this is held-out validation and testing ... and clearly
 learning rate of 0.001 is better in this case. I thought there would be some
 more instability with just 2600 data points.
+
+Here, I ran for 3000 epochs:
+
+![.](figures/mar12_3000_epochs.png?raw=true)
+
+Wow, seems like we should realistically get 93 percent performance. Now, what
+happens when we constrain the output to be in a sigmoid? Hmmm ...

@@ -73,6 +73,7 @@ def plot(all_info, figname):
     # Iterate through the directories, makes things easier.
     for (info, nn, cc) in zip(infos, all_info['names'], COLORS):
         print("Now plotting name {} ...".format(nn))
+        print("note that xc.shape: {}".format(xc.shape))
         attr_idx = 0
         for r in range(nrows):
             for c in range(ncols):
@@ -112,5 +113,6 @@ def plot(all_info, figname):
 
 
 if __name__ == "__main__":
-    plot(names.MAR07_1000_EPOCHS, 'figures/mar07_1000_epochs.png')
     #plot(names.MAR07_FIRST_TRY, 'figures/mar07_first_try.png')
+    #plot(names.MAR07_1000_EPOCHS, 'figures/mar07_1000_epochs.png')
+    plot(names.MAR12_3000_EPOCHS, 'figures/mar12_3000_epochs.png')
