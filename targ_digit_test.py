@@ -80,6 +80,8 @@ class Regressor:
         always force a tanh/sigmoid on the output, for instance).
         """
         assert y_pred.shape == y_targ.shape and len(y_pred.shape) == 2
+        if self.args.scale_output:
+            assert (-0.5 <= np.min(y_pred)) and (np.max(y_pred) <= 9.5)
         acc = 0.0
         for (yp,yt) in zip(y_pred, y_targ):
             if np.abs(yp-yt) < 0.5:
@@ -162,12 +164,13 @@ if __name__ == '__main__':
     # Network and data.
     parser.add_argument('--cnn_arch', type=int, default=1)
     parser.add_argument('--batch_norm', action='store_true')
+    parser.add_argument('--scale_output', action='store_true')
     args = parser.parse_args()
     print("Our arguments:\n{}".format(args))
 
-    logdir = 'logs/train-{}-epochs-{}-bsize-{}-arch-{}-lrate-{}-seed-{}'.format(
+    logdir = 'logs/train-{}-epochs-{}-bsize-{}-arch-{}-lrate-{}-scale-{}-seed-{}'.format(
         args.num_train, args.num_epochs, args.batch_size, args.cnn_arch,
-        args.lrate, args.seed)
+        args.lrate, args.scale_output, args.seed)
     print("logdir: {}\n".format(logdir))
     assert not os.path.exists(logdir), "error: {} exists!".format(logdir)
     logz.configure_output_dir(logdir)

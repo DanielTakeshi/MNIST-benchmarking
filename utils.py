@@ -109,6 +109,9 @@ def build_cnn(*, args, bn_train, s, osize=1, sname='mnist', renorm=True):
             # Fully-connected.
             x = tf.nn.relu( tf.keras.layers.Dense(256)(x) )
             x = tf.keras.layers.Dense(osize)(x)
+            if args.scale_output:
+                # This is specific to this case, bad but might as well test...
+                x = (tf.nn.tanh(x) * 5.0) + 4.5
             layers['final'] = x
             return layers
 

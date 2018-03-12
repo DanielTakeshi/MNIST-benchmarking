@@ -75,9 +75,15 @@ memorizing anything, this is held-out validation and testing ... and clearly
 learning rate of 0.001 is better in this case. I thought there would be some
 more instability with just 2600 data points.
 
-Here, I ran for 3000 epochs:
+Here, I ran for 3000 epochs *and* with me shuffling the training dataset
+entirely at the start of each epoch, so this is almost like a true minibatch
+fashion (normally we have a fixed minibatch and iterate through them, I shuffle
+and then iterate through the resulting minibatches, but there's a third metric
+which involves iterating through an experience replay of samples which is
+probably best):
 
 ![.](figures/mar12_3000_epochs.png?raw=true)
 
 Wow, seems like we should realistically get 93 percent performance. Now, what
-happens when we constrain the output to be in a sigmoid? Hmmm ...
+happens when we constrain the output to be in [-0.5, 9.5] or so? Hmmm ... or we
+could just do [0,9] but feels like cheating.
