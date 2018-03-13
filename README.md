@@ -75,15 +75,23 @@ memorizing anything, this is held-out validation and testing ... and clearly
 learning rate of 0.001 is better in this case. I thought there would be some
 more instability with just 2600 data points.
 
-Here, I ran for 3000 epochs *and* with me shuffling the training dataset
-entirely at the start of each epoch, so this is almost like a true minibatch
-fashion (normally we have a fixed minibatch and iterate through them, I shuffle
-and then iterate through the resulting minibatches, but there's a third metric
-which involves iterating through an experience replay of samples which is
-probably best):
+Here, I ran:
+
+- 3000 epochs of Adam, 3 trials each.
+- With shuffling the training dataset entirely at the start of each epoch, so
+  this is almost like a true minibatch fashion (normally we have a fixed
+  minibatch and iterate through them, I shuffle and then iterate through the
+  resulting minibatches, but there's a third metric which involves iterating
+  through an experience replay of samples which is probably best).
+- I scaled the output into `[-0.5, 9.5]` when needed (`scale=True`) which means
+  taking a hyperbolic tangent, then multiplying by 5, then adding by 4.5. It
+  works.
 
 ![.](figures/mar12_3000_epochs.png?raw=true)
 
-Wow, seems like we should realistically get 93 percent performance. Now, what
-happens when we constrain the output to be in [-0.5, 9.5] or so? Hmmm ... or we
-could just do [0,9] but feels like cheating.
+Wow, seems like we should realistically get 93 percent performance even without
+scaling, and scaling into the range gives even better performance. And recall,
+this is all with just 2600 training data points ...
+
+The plots are confusing in some ways, though. I can't explain the occasional
+drop or jagged shape, and recall that this is with three trials.
