@@ -58,7 +58,7 @@ forgot to take an average over those so the values are much larger than they
 seem, and this also explains the discrepancy as there are 10k training images
 and 5k validation images.
 
-### 2.6k samples
+### 2k and 2.6k samples
 
 For smaller minibatch sizes, the results will be slightly worse. Be careful that
 you're using all the minibatches, by the way, so the batch size divides the
