@@ -93,7 +93,7 @@ Here, I ran:
   scaling, and scaling into the range gives even better performance. And recall,
   this is all with just 2600 training data points ...
 - Oh, and we get almost as good performance based on 2000 data points (with
-  scaling).
+  scaling) and about 89% without scaling, nice.
 
 The plots are confusing in some ways, though. I can't explain the occasional
 drop or jagged shape, and recall that this is with three trials.
