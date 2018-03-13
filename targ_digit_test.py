@@ -175,7 +175,7 @@ if __name__ == '__main__':
     assert not os.path.exists(logdir), "error: {} exists!".format(logdir)
     logz.configure_output_dir(logdir)
 
-    sess = U.get_tf_session(gpumem=0.8)
+    sess = U.get_tf_session(gpumem=0.6)
     np.random.seed(args.seed)
     random.seed(args.seed)
     tf.set_random_seed(args.seed)

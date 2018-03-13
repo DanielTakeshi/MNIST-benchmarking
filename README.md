@@ -89,9 +89,11 @@ Here, I ran:
 
 ![.](figures/mar12_3000_epochs.png?raw=true)
 
-Wow, seems like we should realistically get 93 percent performance even without
-scaling, and scaling into the range gives even better performance. And recall,
-this is all with just 2600 training data points ...
+- Seems like we should realistically get 93 percent performance even without
+  scaling, and scaling into the range gives even better performance. And recall,
+  this is all with just 2600 training data points ...
+- Oh, and we get almost as good performance based on 2000 data points (with
+  scaling).
 
 The plots are confusing in some ways, though. I can't explain the occasional
 drop or jagged shape, and recall that this is with three trials.

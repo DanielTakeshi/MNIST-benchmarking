@@ -17,7 +17,7 @@ tick_size = 18
 legend_size = 19
 xsize, ysize = 19, 19
 lw, ms = 3, 8
-COLORS = ['red', 'blue', 'yellow']
+COLORS = ['red', 'blue', 'yellow', 'brown', 'purple']
 
 
 def get_info(dirs):
@@ -103,8 +103,10 @@ def plot(all_info, figname):
             axes[r,c].tick_params(axis='y', labelsize=tick_size)
             axes[r,c].set_xlabel("Training Epochs", fontsize=xsize)
             axes[r,c].set_ylabel("{}".format(attr), fontsize=ysize)
-            if 'Acc' in attr:
+            if 'acc' in attr.lower():
                 axes[r,c].set_ylim([0.0, 1.0])
+            elif 'diff' in attr.lower():
+                axes[r,c].set_ylim([0.0, 2.0])
             axes[r,c].set_title("{}".format(attr), fontsize=title_size)
             axes[r,c].legend(loc='best', ncol=1, prop={'size':legend_size})
     plt.tight_layout()
