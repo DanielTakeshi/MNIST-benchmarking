@@ -18,14 +18,17 @@ ATTRIBUTES = [
 
 s1='train-2600-epochs-3000-bsize-200-arch-2-lrate-0.001-seed'
 s2='train-2600-epochs-3000-bsize-200-arch-2-lrate-0.0001-seed'
+s3='train-2600-epochs-3000-bsize-200-arch-2-lrate-0.001-scale-True-seed'
 MAR12_3000_EPOCHS = {
     'directories': [
             ['{}-{}'.format(s1,b) for b in range(0,3)],
             ['{}-{}'.format(s2,b) for b in range(0,3)],
+            ['{}-{}'.format(s3,b) for b in range(0,3)],
     ],
     'names': [
-            'tr-2600-eps-3000-bs-200-arch-2-lr-0.001',
-            'tr-2600-eps-3000-bs-200-arch-2-lr-0.0001',
+            'tr-2600-eps-3k-bs-200-arch-2-lr-0.001-scale-False',
+            'tr-2600-eps-3k-bs-200-arch-2-lr-0.0001-scale-False',
+            'tr-2600-eps-3k-bs-200-arch-2-lr-0.001-scale-True',
     ],
 }
 
