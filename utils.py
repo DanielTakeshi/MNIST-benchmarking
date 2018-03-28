@@ -47,6 +47,8 @@ def build_cnn(*, args, bn_train, s, osize=1, sname='mnist', renorm=True):
     x1, x2 = tf.split(x, num_or_size_splits=2, axis=-1)
     filt1 = 32
     filt2 = 64
+    units_fc1 = 400
+    units_fc2 = 256
 
     if args.cnn_arch == 1:
         # ----- ARCHITECTURE 1 -----
@@ -87,7 +89,7 @@ def build_cnn(*, args, bn_train, s, osize=1, sname='mnist', renorm=True):
                 x1 = tf.layers.batch_normalization(x1, training=bn_train, renorm=renorm)
             x1 = tf.keras.layers.MaxPool2D(pool_size=[2,2])(x1)
             x1 = tf.keras.layers.Flatten()(x1)
-            x1 = tf.nn.relu( tf.keras.layers.Dense(400)(x1) )
+            x1 = tf.nn.relu( tf.keras.layers.Dense(units_fc1)(x1) )
             # Second image.
             x2 = tf.keras.layers.Conv2D(filters=filt1, kernel_size=[5,5], padding='SAME')(x2)
             x2 = tf.nn.relu(x2)
@@ -100,14 +102,14 @@ def build_cnn(*, args, bn_train, s, osize=1, sname='mnist', renorm=True):
                 x2 = tf.layers.batch_normalization(x2, training=bn_train, renorm=renorm)
             x2 = tf.keras.layers.MaxPool2D(pool_size=[2,2])(x2)
             x2 = tf.keras.layers.Flatten()(x2)
-            x2 = tf.nn.relu( tf.keras.layers.Dense(400)(x2) )
+            x2 = tf.nn.relu( tf.keras.layers.Dense(units_fc1)(x2) )
             # Concatenation.
             layers['x1-branch'] = x1
             layers['x2-branch'] = x2
             x = tf.concat([x1, x2], axis=1)
             layers['after-concat'] = x
             # Fully-connected.
-            x = tf.nn.relu( tf.keras.layers.Dense(256)(x) )
+            x = tf.nn.relu( tf.keras.layers.Dense(units_fc2)(x) )
             x = tf.keras.layers.Dense(osize)(x)
             if args.scale_output:
                 # This is specific to this case, bad but might as well test...

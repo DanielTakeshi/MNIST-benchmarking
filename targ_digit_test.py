@@ -162,12 +162,13 @@ if __name__ == '__main__':
     parser.add_argument('--l2_reg', type=float, default=0.00001)
     parser.add_argument('--optimizer', type=str, default='adam')
     # Network and data.
-    parser.add_argument('--cnn_arch', type=int, default=1)
+    parser.add_argument('--cnn_arch', type=int, default=2)
     parser.add_argument('--batch_norm', action='store_true')
     parser.add_argument('--scale_output', action='store_true')
     args = parser.parse_args()
     print("Our arguments:\n{}".format(args))
 
+    assert args.num_train % args.batch_size == 0
     logdir = 'logs/train-{}-epochs-{}-bsize-{}-arch-{}-lrate-{}-scale-{}-seed-{}'.format(
         args.num_train, args.num_epochs, args.batch_size, args.cnn_arch,
         args.lrate, args.scale_output, args.seed)
