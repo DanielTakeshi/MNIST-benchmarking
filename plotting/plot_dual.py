@@ -64,14 +64,14 @@ def plot(all_info, figname):
     infos = []
     for dirs in all_info['directories']:
         infos.append(get_info(dirs))
-    xc = (infos[0])['TrainEpochs'][0]
     nrows = int( (len(names.ATTRIBUTES)+1)/2 )
     ncols = 2
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(22,6*nrows))
     past = 20
 
     # Iterate through the directories, makes things easier.
-    for (info, nn, cc) in zip(infos, all_info['names'], COLORS):
+    for idx,(info, nn, cc) in enumerate(zip(infos, all_info['names'], COLORS)):
+        xc = (infos[idx])['TrainEpochs'][0]
         print("Now plotting name {} ...".format(nn))
         print("note that xc.shape: {}".format(xc.shape))
         attr_idx = 0
@@ -117,4 +117,5 @@ def plot(all_info, figname):
 if __name__ == "__main__":
     #plot(names.MAR07_FIRST_TRY, 'figures/mar07_first_try.png')
     #plot(names.MAR07_1000_EPOCHS, 'figures/mar07_1000_epochs.png')
-    plot(names.MAR12_3000_EPOCHS, 'figures/mar12_3000_epochs.png')
+    #plot(names.MAR12_3000_EPOCHS, 'figures/mar12_3000_epochs.png')
+    plot(names.MAR28_SMALL_DATA, 'figures/mar28_small_data.png')

@@ -97,3 +97,10 @@ Here, I ran:
 
 The plots are confusing in some ways, though. I can't explain the occasional
 drop or jagged shape, and recall that this is with three trials.
+
+With 1600 data points, for 6k epochs, we *still* get strong performance.
+
+![.](figures/mar28_small_data.png?raw=true)
+
+What I want to know now, though, is why the curves for validation and testing
+are so close, and even have the same "dips" in them. Hmmm...
